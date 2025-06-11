@@ -1,38 +1,40 @@
 import streamlit as st
-import numpy as np
 import pandas as pd
 import joblib
 
+# Load trained model and scaler
+model = joblib.load('final_model.pkl')  # Trained model
+scaler = joblib.load('scaler.pkl')      # Scaler for 'Time' and 'Amount' only
 
-model = joblib.load("final_model.pkl")
-scaler = joblib.load("scaler.pkl")
+# App Title
+st.title("🔍 Credit Card Fraud Detection")
 
+# Input for Time and Amount
+time = st.number_input("Transaction Time", min_value=0.0)
+amount = st.number_input("Transaction Amount", min_value=0.0)
 
-st.title("💳 Credit Card Fraud Detection")
-st.markdown("Enter the transaction details below:")
-
-
-time = st.number_input("Time", value=10000.0)
-
-
-v_features = []
+# Inputs for V1 to V28
+v_inputs = []
 for i in range(1, 29):
-    val = st.number_input(f"V{i}", value=0.0)
-    v_features.append(val)
+    val = st.number_input(f"V{i}", value=0.0, format="%.5f")
+    v_inputs.append(val)
 
-amount = st.number_input("Amount", value=150.0)
+# Prediction Button
+if st.button("Predict Fraud"):
+    # Create input DataFrame
+    input_data = [time] + v_inputs + [amount]
+    columns = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+    input_df = pd.DataFrame([input_data], columns=columns)
 
+    # Scale only 'Time' and 'Amount'
+    input_df[['Time', 'Amount']] = scaler.transform(input_df[['Time', 'Amount']])
 
-input_data = [time] + v_features + [amount]
-input_df = pd.DataFrame([input_data], columns=[
-    'Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount'])
+    # Make prediction
+    prediction = model.predict(input_df)[0]
+    confidence = model.predict_proba(input_df)[0][prediction]
 
-if st.button("Predict"):
-    # Scale input
-    scaled_input = scaler.transform(input_df)
-    prediction = model.predict(scaled_input)
-
-    if prediction[0] == 1:
-        st.error("⚠️ Fraudulent Transaction Detected!")
+    # Display result
+    if prediction == 1:
+        st.error(f"⚠️ Fraudulent Transaction Detected (Confidence: {confidence:.2%})")
     else:
-        st.success("✅ Genuine Transaction")
+        st.success(f"✅ Genuine Transaction (Confidence: {confidence:.2%})")
