@@ -1,0 +1,6 @@
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
+
+
+import joblib
+joblib.dump(model, 'fianl_model.pkl')
