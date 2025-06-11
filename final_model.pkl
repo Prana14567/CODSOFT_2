@@ -1,6 +1,8 @@
-rf_model = RandomForestClassifier()
+import joblib
+
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X_train, y_train)
 
 
-import joblib
-joblib.dump(model, 'fianl_model.pkl')
+joblib.dump(rf_model, 'final_model.pkl')
